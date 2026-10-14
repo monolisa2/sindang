@@ -107,7 +107,11 @@ img{display:block}
 .photo-wrap .blink{opacity:0;animation:blink 4.6s linear infinite}
 .photo-wrap .glance{opacity:0;animation:glance 7.5s ease-in-out infinite;transition:opacity .25s}
 .photo-wrap .talk{opacity:0}
-.is-talking .photo-wrap .talk{animation:talk .95s steps(1,end) infinite}
+.photo-wrap.has-video{animation:none}
+.photo-wrap .vid{opacity:0;transition:opacity .6s}
+.photo-wrap .vid.is-ready{opacity:1}
+.is-talking .photo-wrap:not(.has-video) .talk{animation:talk .95s steps(1,end) infinite}
+.photo-wrap.has-video .blink,.photo-wrap.has-video .glance{display:none}
 @keyframes kb{from{transform:scale(1)}to{transform:scale(1.1)}}
 @keyframes blink{0%,93%{opacity:0}94%,96.5%{opacity:1}97.5%,100%{opacity:0}}
 @keyframes glance{0%,62%{opacity:0}68%,84%{opacity:1}90%,100%{opacity:0}}
@@ -378,7 +382,7 @@ img{display:block}
     <div class="phone" id="phone">
       <div class="progress" id="progress"><i></i></div>
       <div class="host-visual" id="hostVisual">
-        <div class="photo-wrap intro" id="hostPhotoWrap"><img class="photo" id="hostPhoto" alt=""><img class="photo" id="hostBlink" alt=""><img class="photo talk" id="hostTalk" alt=""></div><canvas class="fx" id="fx"></canvas>
+        <div class="photo-wrap intro" id="hostPhotoWrap"><img class="photo" id="hostPhoto" alt=""><img class="photo" id="hostBlink" alt=""><img class="photo talk" id="hostTalk" alt=""><video class="photo vid" id="hostVideo" muted loop playsinline preload="auto" disablepictureinpicture></video></div><canvas class="fx" id="fx"></canvas>
         <div class="rays"></div><div class="breath"></div><div class="vignette"></div>
         <div class="particles" id="particles"></div>
       </div>
@@ -447,7 +451,7 @@ img{display:block}
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.3/lunar.js"></script>
 <script>
 /* ================= DATA ================= */
-const IMG=(k,v)=>'assets/hosts/'+k+(v?'_'+v:'')+'.webp';const HOST_IMG={};const GLANCE={bokrae:1,wolhwa:1};
+const IMG=(k,v)=>'assets/hosts/'+k+(v?'_'+v:'')+'.webp';const VIDEO_HOSTS=["dagyeong","cheongan","eunho"];const VID=k=>'assets/video/'+k+'.mp4';const hasVid=k=>VIDEO_HOSTS.includes(k);const HOST_IMG={};const GLANCE={bokrae:1,wolhwa:1};
 const HOSTS=[
   {key:'cheongan',name:'청안이',hanja:'靑',tag:'맑은 눈의 동자신',c:['#1d3b6b','#2f5aa8','#7fb4ff'],style:'동자',intro:'왔구나! 오늘은 어떤 하루가 될지 내가 콕 집어 말해줄게.',lines:['별이 반짝이는 날이야.','조심조심, 그래도 웃어.','좋은 소식이 올 것 같아!']},
   {key:'eunho',name:'은호 도령',hanja:'銀',tag:'달빛을 읽는 선비',c:['#2d2f45','#5a5e85','#c9cde8'],style:'선비',intro:'오셨군요. 오늘의 달빛이 그대에게 무엇을 비추는지 함께 보시지요.',lines:['달이 기울면 길이 열립니다.','서두르지 마십시오.','기회는 조용히 옵니다.']},
@@ -593,7 +597,7 @@ function cardHTML(h,dup,i){
   return `<button class="guide-card${dup?' dup':''}" type="button" data-key="${h.key}" aria-label="${h.name} 오늘의 운세 확인" style="--c1:${h.c[0]};--c2:${h.c[1]};--c3:${h.c[2]}">
     <span class="ambient"></span>
     <span class="inner">
-      <span class="photo-wrap" style="animation-delay:${-(i*1.7)%16}s"><img class="photo" src="${IMG(h.key)}" alt="" loading="lazy" decoding="async"><img class="photo ${GLANCE[h.key]?'glance':'blink'}" src="${IMG(h.key,'blink')}" alt="" loading="lazy" decoding="async" style="animation-delay:${-(i*1.3)%5}s"></span>
+      <span class="photo-wrap${hasVid(h.key)?' has-video':''}" style="animation-delay:${-(i*1.7)%16}s"><img class="photo" src="${IMG(h.key)}" alt="" loading="lazy" decoding="async">${hasVid(h.key)?`<video class="photo vid" src="${VID(h.key)}" poster="${IMG(h.key)}" muted loop playsinline preload="metadata" disablepictureinpicture></video>`:`<img class="photo ${GLANCE[h.key]?'glance':'blink'}" src="${IMG(h.key,'blink')}" alt="" loading="lazy" decoding="async" style="animation-delay:${-(i*1.3)%5}s">`}</span>
       <span class="sheen"></span><span class="scrim"></span>
       <span class="like${on?' is-on':''}" role="button" tabindex="0" data-like="${h.key}" aria-label="${h.name} 추천">${THUMB}<span>${fmtCount(likesOf(h.key))}</span></span>
       <span class="badge">${h.style}</span>
@@ -602,7 +606,8 @@ function cardHTML(h,dup,i){
     </span></button>`;
 }
 function sortedHosts(){const list=[...HOSTS];if(state.sort==='name')list.sort((a,b)=>a.name.localeCompare(b.name,'ko'));else if(state.sort==='rand'){const r=rng('rand'+todayStr());list.sort(()=>r()-.5)}else list.sort((a,b)=>likesOf(b.key)-likesOf(a.key));return list}
-function renderCards(){const list=sortedHosts();$('#track').innerHTML=list.map((h,i)=>cardHTML(h,false,i)).join('')+list.map((h,i)=>cardHTML(h,true,i)).join('')}
+const vidIO=('IntersectionObserver' in window)?new IntersectionObserver(es=>{es.forEach(e=>{const v=e.target;if(e.isIntersecting){if(!v.src&&v.dataset.src)v.src=v.dataset.src;v.play().then(()=>v.classList.add('is-ready')).catch(()=>{})}else v.pause()})},{rootMargin:'120px'}):null;
+function renderCards(){const list=sortedHosts();$('#track').innerHTML=list.map((h,i)=>cardHTML(h,false,i)).join('')+list.map((h,i)=>cardHTML(h,true,i)).join('');$$('#track video').forEach(v=>{if(vidIO)vidIO.observe(v);else v.play().then(()=>v.classList.add('is-ready')).catch(()=>{})})}
 function applyView(v){$('#cards').classList.toggle('is-grid',v==='grid');$('#viewToggleLabel').textContent=v==='grid'?'가로보기':'2단보기'}
 applyView(store.view);
 $('#viewToggle').onclick=()=>{const v=store.view==='grid'?'carousel':'grid';store.view=v;applyView(v)};
@@ -615,7 +620,7 @@ $('#eventBanner').onclick=()=>toast('인연 궤도는 준비 중이에요. 곧 �
 renderCards();
 
 /* ================= ROUTER ================= */
-function show(id){if(id!=='viewFortune')fxStop();$$('.view').forEach(v=>v.classList.toggle('is-active',v.id===id));$('#header').style.display=id==='viewHome'?'':'none';window.scrollTo(0,0)}
+function show(id){if(id!=='viewFortune'){fxStop();const hv0=$('#hostVideo');if(hv0&&hv0.src)hv0.pause()}$$('.view').forEach(v=>v.classList.toggle('is-active',v.id===id));$('#header').style.display=id==='viewHome'?'':'none';window.scrollTo(0,0)}
 function navigate(p){state.path=p;try{if(location.hash!==p)location.hash=p}catch{}route(p)}
 function route(h){
   h=h||state.path||location.hash||'#/';state.path=h;
@@ -640,7 +645,7 @@ function shareUrl(){const base=location.href.split('#')[0];const path=resultPath
 function startFortune(host){
   state.host=host;state.profile=null;state.shared=false;show('viewFortune');
   const ph=$('#phone');ph.style.setProperty('--c1',host.c[0]);ph.style.setProperty('--c2',host.c[1]);ph.style.setProperty('--c3',host.c[2]);
-  $('#hostPhoto').src=IMG(host.key);const hb=$('#hostBlink');hb.src=IMG(host.key,'blink');hb.className='photo '+(GLANCE[host.key]?'glance':'blink');$('#hostTalk').src=IMG(host.key,'talk');fxStart(host.key);$('#stageBg').style.backgroundImage=HOST_IMG[host.key]?`url(${HOST_IMG[host.key]})`:`linear-gradient(160deg,${host.c[0]},${host.c[2]})`;
+  $('#hostPhoto').src=IMG(host.key);const hb=$('#hostBlink');hb.src=IMG(host.key,'blink');hb.className='photo '+(GLANCE[host.key]?'glance':'blink');$('#hostTalk').src=IMG(host.key,'talk');const hv=$('#hostVideo'),hw=$('#hostPhotoWrap');hv.classList.remove('is-ready');hv.pause();hv.removeAttribute('src');hv.load();hw.classList.toggle('has-video',hasVid(host.key));if(hasVid(host.key)){hv.src=VID(host.key);hv.oncanplay=()=>{hv.classList.add('is-ready');hv.play().catch(()=>{})};hv.load()}fxStart(host.key);$('#stageBg').style.backgroundImage=HOST_IMG[host.key]?`url(${HOST_IMG[host.key]})`:`linear-gradient(160deg,${host.c[0]},${host.c[2]})`;
   $('#introName').textContent=host.name;
   $('#particles').innerHTML=Array.from({length:16},()=>`<i style="left:${Math.random()*100}%;top:${20+Math.random()*70}%;animation-delay:${-Math.random()*6}s;animation-duration:${4+Math.random()*4}s"></i>`).join('');
   $('#sheet').classList.remove('is-open');$('#loadingWrap').style.display='none';$('#introCaption').style.display='';$('#introControls').style.display='';
@@ -660,7 +665,7 @@ function runIntro(host){
 }
 function stopIntro(){if(state.introTimer)cancelAnimationFrame(state.introTimer);state.introTimer=null;$('#phone').classList.remove('is-talking')}
 $('#skipBtn').onclick=()=>{stopIntro();$('#progress i').style.width='100%';openSheet()};
-$('#pauseBtn').onclick=()=>{state.paused=!state.paused;$('#phone').classList.toggle('is-paused',state.paused);$('#hostPhotoWrap').style.animationPlayState=state.paused?'paused':'running';$('#phone').classList.toggle('is-talking',!state.paused&&!!state.introTimer);$('#pauseIcon').innerHTML=state.paused?'<path d="M8 5v14l11-7z"/>':'<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>'};
+$('#pauseBtn').onclick=()=>{state.paused=!state.paused;$('#phone').classList.toggle('is-paused',state.paused);$('#hostPhotoWrap').style.animationPlayState=state.paused?'paused':'running';const hvp=$('#hostVideo');if(hvp.src){state.paused?hvp.pause():hvp.play().catch(()=>{})}$('#phone').classList.toggle('is-talking',!state.paused&&!!state.introTimer);$('#pauseIcon').innerHTML=state.paused?'<path d="M8 5v14l11-7z"/>':'<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>'};
 $('#muteBtn').onclick=function(){this.classList.toggle('muted');toast(this.classList.contains('muted')?'소리 꺼짐':'소리 켜짐')};
 function openSheet(){$('#introCaption').style.display='none';$('#introControls').style.display='none';renderProfileList();$('#sheetProfiles').style.display='';$('#sheetForm').style.display='none';$('#sheet').classList.add('is-open')}
 function animalIdx(birth){return (((+birth.slice(0,4))-4)%12+12)%12}
