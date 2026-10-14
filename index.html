@@ -451,7 +451,7 @@ img{display:block}
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.3/lunar.js"></script>
 <script>
 /* ================= DATA ================= */
-const IMG=(k,v)=>'assets/hosts/'+k+(v?'_'+v:'')+'.webp';const VIDEO_HOSTS=["dagyeong","cheongan","eunho"];const VID=k=>'assets/video/'+k+'.mp4';const hasVid=k=>VIDEO_HOSTS.includes(k);const HOST_IMG={};const GLANCE={bokrae:1,wolhwa:1};
+const IMG=(k,v)=>'assets/hosts/'+k+(v?'_'+v:'')+'.webp';const VIDEO_HOSTS=[];fetch('assets/video/manifest.json?v='+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():[]).then(l=>{if(Array.isArray(l)){l.forEach(k=>{if(!VIDEO_HOSTS.includes(k))VIDEO_HOSTS.push(k)});if(typeof renderCards==='function')renderCards()}}).catch(()=>{});const VID=k=>'assets/video/'+k+'.mp4';const hasVid=k=>VIDEO_HOSTS.includes(k);const HOST_IMG={};const GLANCE={bokrae:1,wolhwa:1};
 const HOSTS=[
   {key:'cheongan',name:'청안이',hanja:'靑',tag:'맑은 눈의 동자신',c:['#1d3b6b','#2f5aa8','#7fb4ff'],style:'동자',intro:'왔구나! 오늘은 어떤 하루가 될지 내가 콕 집어 말해줄게.',lines:['별이 반짝이는 날이야.','조심조심, 그래도 웃어.','좋은 소식이 올 것 같아!']},
   {key:'eunho',name:'은호 도령',hanja:'銀',tag:'달빛을 읽는 선비',c:['#2d2f45','#5a5e85','#c9cde8'],style:'선비',intro:'오셨군요. 오늘의 달빛이 그대에게 무엇을 비추는지 함께 보시지요.',lines:['달이 기울면 길이 열립니다.','서두르지 마십시오.','기회는 조용히 옵니다.']},
