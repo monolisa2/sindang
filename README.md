@@ -4,8 +4,9 @@
 서버 없이 정적 파일만으로 동작하며 비용이 들지 않습니다.
 
 - 사이트: https://monolisa2.github.io/sindang/
-- 단일 파일(`index.html`)로 동작하며 점술가 이미지는 base64로 내장되어 있습니다.
-- `assets/hosts/`에는 원본 이미지(webp)가 들어 있습니다. 영상으로 교체하려면 같은 이름의 mp4를 넣고 `index.html`의 `<img class="photo">`를 `<video autoplay loop muted playsinline>`으로 바꾸면 됩니다.
+- `index.html` 하나와 `assets/hosts/` 이미지로 동작합니다.
+- 점술가마다 이미지 3장: 기본(`key.webp`), 눈 감음(`key_blink.webp`), 입 벌림(`key_talk.webp`). CSS로 교차시켜 눈 깜빡임과 말하기(인트로 자막 타이핑 중) 효과를 냅니다. 여기에 켄번즈 줌과 점술가별 입자 효과(꽃잎, 불씨, 별가루, 찻김, 먹물 등)를 더해 영상처럼 보이게 했습니다.
+- 진짜 영상으로 교체하려면 같은 이름의 mp4를 넣고 `.photo-wrap` 안의 `<img>`를 `<video autoplay loop muted playsinline>`으로 바꾸면 됩니다.
 
 ## 운세 로직 (v3)
 1. **사주 계산**: [lunar-javascript](https://github.com/6tail/lunar-javascript) (MIT)로 절기 기준 년·월·일·시 네 기둥을 계산하고, 음력 입력은 양력으로 변환합니다. CDN을 못 불러오면 자체 근사 계산으로 대체합니다.
